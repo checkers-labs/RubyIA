@@ -1,55 +1,59 @@
 load 'Pion.rb'
+load 'Tools.rb'
 
 class Plateau
-  def initialize(tab_pion = [Pion.new(false, false, 1, 2), Pion.new(false, false, 1, 4), Pion.new(false, false, 1, 6), Pion.new(false, false, 1, 8), Pion.new(false, false, 2, 1), Pion.new(false, false, 2, 3), Pion.new(false, false, 2, 5), Pion.new(false, false, 2, 7), Pion.new(false, false, 3, 2), Pion.new(false, false, 3, 4), Pion.new(false, false, 3, 6), Pion.new(false, false, 3, 8), Pion.new(true, false, 6, 1), Pion.new(true, false, 6, 3), Pion.new(true, false, 6, 5), Pion.new(true, false, 6, 7), Pion.new(true, false, 7, 2), Pion.new(true, false, 7, 4), Pion.new(true, false, 7, 6), Pion.new(true, false, 7, 8), Pion.new(true, false, 8, 1), Pion.new(true, false, 8, 3), Pion.new(true, false, 8, 5), Pion.new(true, false, 8, 7)])
+  def initialize(tab_pion = Tools.create_first_board)
     @p_tab_pion = tab_pion
-  end
-  
-  def move(old_line, old_column, new_line, new_column)
-    @p_tab_pion.each{
-      |pion|
-      if pion.p_line == old_line and pion.p_column == old_column
-        if old_line - new_line == 1.abs
-          pion.p_line = new_line
-          pion.p_column = new_column
-        else
-          pion.p_line = new_line
-          pion.p_column = new_column
-          
-          $killed_pion_line = 0
-          $killed_pion_column = 0
-          
-          if old_line > new_line
-              $killed_pion_line = old_line - 1
-          else
-            $killed_pion_line = new_line - 1
-          end
-          
-          if old_column > new_column
-              $killed_pion_column = old_column - 1
-          else
-            $killed_pion_column = new_column - 1
-          end
-          
-          @p_tab_pion.each{
-            |killed_pion|
-            if killed_pion.p_line == $killed_pion_line and killed_pion.p_column == $killed_pion_column
-              @p_tab_pion.delete(killed_pion)
-              break
-            end
-          }
-        end
-        break
-      end
-    }
-    
-  end
-  
-  def test
-    @p_tab_pion[8].test
+  end 
+
+  def looking_for_possibilities
+
   end
   
   attr_accessor :p_tab_pion
+  
+  private
+  
+  def is_possible_move(xOrig, yOrig, xDest, yDest)
+    xDist = (xDest - xOrig).abs
+    yDist = (yDest - yOrig).abs
+    
+    if xOrig < 0 || xOrig > 7 || yOrig < 0 || yOrig > 7 # The piece should be into the board.
+      return false
+    end
+    
+    if xDest < 0 || xDest > 7 || yDest < 0 || yDest > 7 # The piece should not go out of the board.
+      return false
+    end
+    
+    if $damier[xOrig][yOrig] == 0 # We check that there is a piece to move.
+      return false
+    end
+    
+    if (xDist != 1 && xDist != 2) || (yDist != 1 && yDist != 2) # We check if the move is authorized.
+      return false
+    end
+    
+    if $damier[xDest][yDest] != 0 # We check that the destination case is free.
+      return false
+    end
+    
+    if xDist == 2 && yDist == 2 # If the move implied to eat another.    
+    moved_piece = $damier[xOrig][yOrig]
+    skipped_piece = $damier[(xOrig + xDest) / 2][(yOrig + yDest) / 2]
+    
+    if skipped_piece == 0 # We forbid the player to jump over an empty case.
+      return false
+    end
+    
+    if (skipped_piece + moved_piece) % 2 == 0 # We forbid the player to eat his own pieces.
+      return false
+    end
+    
+    # At this point, the move is totally allowed.
+    return true
+    
+  end
   
 end
 

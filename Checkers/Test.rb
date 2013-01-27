@@ -1,11 +1,35 @@
 load 'Checker.rb'
 load 'Pion.rb'
 load 'Plateau.rb'
+load 'Tools.rb'
+
+$i = 1
+
+test = Plateau.new
+
+test.p_tab_pion.each{
+  |ligne|
+  ligne.each{
+    |pion|
+    if pion == nil
+      print 0
+    elsif pion == Pion.new(false, false)
+      print 1
+    elsif pion == Pion.new(true, false)
+      print 2
+    end   
+    
+    print " "
+  }
+  print "\n"
+}
 
 
-print (-5-9).abs
 
+=begin
+arr = [[1, 2, 3],[4, nil, 6]]
 
+print arr[1][1]
 
 =begin
 plateau = Plateau.new
