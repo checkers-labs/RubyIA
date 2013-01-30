@@ -7,6 +7,10 @@ $i = 1
 
 test = Plateau.new
 
+tablo = Array.new
+tablo = test.search_moves_list(2, 1)
+
+print "\n"
 test.p_tab_pion.each{
   |ligne|
   ligne.each{
