@@ -2,20 +2,31 @@ load 'Piece.rb'
 load 'Tools.rb'
 load 'Board.rb'
 
-class Core 
+class Board_Manager 
   
   def initialize(board)
-    @board = board
+    @real_board = board
+    @calculation_board = Board.new
+    @calculation_board.copy(@real_board)
   end
   
-  attr_accessor :board
+  attr_accessor :real_board
+  attr_accessor :calculation_board
   attr_accessor :p_moves_list
   attr_accessor :p_must_eat
   
   
-  def display()
+  
+  # Display a board.
+  def display(is_real_board = true)
+    selected_board = @real_board
+    
+    if is_real_board == false
+      selected_board = @calculation_board
+    end
+    
     print "\n"
-    @board.tab_piece.each{
+    selected_board.tab_piece.each{
       |ligne|
       ligne.each{
         |piece|
@@ -37,27 +48,50 @@ class Core
     }
   end
   
+  
+  
   # Moves a piece.
   def move(xOrig, yOrig, xDest, yDest)
+    
     if is_possible_move(xOrig, yOrig, xDest, yDest) == true
       xDist = (xDest - xOrig).abs
       yDist = (yDest - yOrig).abs
       
       if xDist == 2 && yDist == 2 # If the move imply to eat a piece.  
-        @board.tab_piece[(xOrig + xDest) / 2][(yOrig + yDest) / 2] = nil
+        @real_board.tab_piece[(xOrig + xDest) / 2][(yOrig + yDest) / 2] = nil
       end 
       
-      @board.tab_piece[xDest][yDest] = board.tab_piece[xOrig][yOrig]
-      @board.tab_piece[xOrig][yOrig] = nil
+      @real_board.tab_piece[xDest][yDest] = @real_board.tab_piece[xOrig][yOrig]
+      @real_board.tab_piece[xOrig][yOrig] = nil
+      
+      if xDest == 0 || xDest == 7 # Crown a piece.
+        @real_board.tab_piece[xDest][yDest].p_is_king = true
+      end
+      
+=begin     
+      if @real_board.tab_piece[xDest][yDest].p_is_king == false # We may simplify this condition.
+        if (xDest == 0 && @real_board.tab_piece[xDest][yDest].p_is_white) || (xDest == 7 && !@real_board.tab_piece[xDest][yDest].p_is_white) # Crown a piece.
+          @real_board.tab_piece[xDest][yDest].p_is_king = true
+        end
+      end
+=end
     end
   end
-  # End of moving a piece.
+  
+  
+  
+  # Moves a piece for the recursivity search.
+  def recursive_move(xOrig, yOrig, xDest, yDest)
+    @calculation_board.tab_piece[(xOrig + xDest) / 2][(yOrig + yDest) / 2] = nil
+    @calculation_board.tab_piece[xDest][yDest] = @calculation_board.tab_piece[xOrig][yOrig]
+    @calculation_board.tab_piece[xOrig][yOrig] = nil
+  end
 
 
-# Check if a move is allowed.
+
+  # Check if a move is allowed.
   def is_possible_move(xOrig, yOrig, xDest, yDest)
-    if @board.tab_piece[xOrig][yOrig] == nil # We check that there is a piece to move.
-      print "No piece to move"
+    if @calculation_board.tab_piece[xOrig][yOrig] == nil # We check that there is a piece to move.
       return false
     end
     
@@ -73,13 +107,12 @@ class Core
       return false
     end
     
-    if !@board.tab_piece[xOrig][yOrig].p_is_king # We check that the piece is going the right way.
-      if @board.tab_piece[xOrig][yOrig].p_is_white && xDest > xOrig # White pieces must go top.       
+    if !@calculation_board.tab_piece[xOrig][yOrig].p_is_king # We check that the piece is going the right way.
+      if @calculation_board.tab_piece[xOrig][yOrig].p_is_white && xDest > xOrig # White pieces must go top.       
         return false
       end
       
-      if !@board.tab_piece[xOrig][yOrig].p_is_white && xDest < xOrig # Black pieces must go down.
-        print "Error b\n"
+      if !@calculation_board.tab_piece[xOrig][yOrig].p_is_white && xDest < xOrig # Black pieces must go down.
         return false
       end
     end
@@ -88,13 +121,13 @@ class Core
       return false
     end
     
-    if @board.tab_piece[xDest][yDest] != nil # We check that the destination case is free.
+    if @calculation_board.tab_piece[xDest][yDest] != nil # We check that the destination case is free.
       return false
     end
     
     if dist == 4 # If the move implied to eat another.    
-      moved_piece = @board.tab_piece[xOrig][yOrig]
-      skipped_piece = @board.tab_piece[(xOrig + xDest) / 2][(yOrig + yDest) / 2]
+      moved_piece = @calculation_board.tab_piece[xOrig][yOrig]
+      skipped_piece = @calculation_board.tab_piece[(xOrig + xDest) / 2][(yOrig + yDest) / 2]
       
       if skipped_piece == nil # We forbid the player to jump over an empty case.
         return false
@@ -110,21 +143,21 @@ class Core
     return true
     
   end
-  # End checking if a move is allowed.
+
+
   
-  def number_of_move()
-    @tab_moves = search_player_moves(board.white_is_playing)
-    @number_moves = @tab_moves.size
-    return @number_moves
+  # Return the number of moves.
+  def number_of_moves(is_white_player)
+    @calculation_board.copy(@real_board)
+    return search_player_moves(is_white_player).length
   end
 
   
   
-# List all the possible moves for a piece.
+  # List all the possible moves for a piece.
   def search_piece_moves(xOrig, yOrig, recursivity_level)
     
-    if @board.tab_piece[xOrig][yOrig] == nil
-      print "Empty case"
+    if @calculation_board.tab_piece[xOrig][yOrig] == nil
       return nil
     end
       
@@ -132,12 +165,12 @@ class Core
     
     for x in [-2, -1, 1, 2] # Only those cases can be reached.
       for y in [-2, -1, 1, 2]
-        if !@board.tab_piece[xOrig][yOrig].p_is_king
-          if @board.tab_piece[xOrig][yOrig].p_is_white && x > 0 # The white pieces must just go top.
+        if !@calculation_board.tab_piece[xOrig][yOrig].p_is_king
+          if @calculation_board.tab_piece[xOrig][yOrig].p_is_white && x > 0 # The white pieces must just go top.
             next
           end
           
-          if !@board.tab_piece[xOrig][yOrig].p_is_white && x < 0 # The black pieces must just go down.
+          if !@calculation_board.tab_piece[xOrig][yOrig].p_is_white && x < 0 # The black pieces must just go down.
             next
           end
         end
@@ -154,18 +187,18 @@ class Core
           
           if x.abs + y.abs == 4 # Chain capturing
             # We make a temporary move.
-            source = @board.tab_piece[xOrig][yOrig]
-            captured = @board.tab_piece[(xOrig + xOrig + x) / 2][(yOrig + yOrig + y) / 2]
-            self.move(xOrig, yOrig, xOrig + x, yOrig + y)
+            source = @calculation_board.tab_piece[xOrig][yOrig]
+            captured = @calculation_board.tab_piece[(xOrig + xOrig + x) / 2][(yOrig + yOrig + y) / 2]
+            self.recursive_move(xOrig, yOrig, xOrig + x, yOrig + y)
             
             # Recursivity
             self.search_piece_moves(xOrig + x, yOrig + y, 2)
             recursivity_level -= 1
             
             # We rollback the move (can't use the "move" method cause standard pieces can't move backward).
-            @board.tab_piece[xOrig][yOrig] = source
-            @board.tab_piece[(xOrig + xOrig + x) / 2][(yOrig + yOrig + y) / 2] = captured
-            @board.tab_piece[xOrig + x][yOrig + y] = nil
+            @calculation_board.tab_piece[xOrig][yOrig] = source
+            @calculation_board.tab_piece[(xOrig + xOrig + x) / 2][(yOrig + yOrig + y) / 2] = captured
+            @calculation_board.tab_piece[xOrig + x][yOrig + y] = nil
           end
           
           if !@p_must_eat && recursivity_level <= 0
@@ -180,12 +213,13 @@ class Core
       x += 2 # One case out of 2 is empty.
     end
     
-    if recursivity_level >= 2 && move == nil
+    if recursivity_level >= 2 && move == nil # Record the move at the end of the capturing chain.
       move = [xOrig, yOrig]
       @p_moves_list << move
     end
   end
-  # End of the listing of all the possible moves for a piece.
+
+
   
   # List all the possible moves for a player.
   def search_player_moves(is_white_player)
@@ -195,24 +229,23 @@ class Core
     
     for i in 0..7
       for j in 0..7
-        if @board.tab_piece[i][j] == nil
+        if @calculation_board.tab_piece[i][j] == nil
           next
         end
         
-        if @board.tab_piece[i][j].p_is_white == is_white_player
+        if @calculation_board.tab_piece[i][j].p_is_white == is_white_player
           self.search_piece_moves(i, j, 0)
         end
       end
     end
     
+    # Display the results (for debug only)
     @p_moves_list.each{
       |coup|
       print coup
     }
     
     return @p_moves_list
-  end
-  # End listing of all the possible moves for a player.
-  
+  end  
   
 end
