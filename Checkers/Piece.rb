@@ -1,8 +1,8 @@
-class Pion
+class Piece
   
-  def initialize(is_white, is_dame)
+  def initialize(is_white, is_king)
   @p_is_white = is_white
-  @p_is_dame = is_dame
+  @p_is_king = is_king
   end
   
   def test
@@ -10,10 +10,10 @@ class Pion
     print @p_column
   end
   
-  def ==(another_pion)
+  def ==(another_piece)
     is_the_same = false
-    if another_pion != nil
-      if self.p_is_white == another_pion.p_is_white and self.p_is_dame == another_pion.p_is_dame
+    if another_piece != nil
+      if self.p_is_white == another_piece.p_is_white and self.p_is_king == another_piece.p_is_king
         is_the_same = true
       end
     end
@@ -23,6 +23,6 @@ class Pion
   end
   
   attr_accessor :p_is_white
-  attr_accessor :p_is_dame
+  attr_accessor :p_is_king
   
 end

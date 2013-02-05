@@ -1,4 +1,4 @@
-load 'Pion.rb'
+load 'Piece.rb'
 
 class Tools
   def Tools.create_first_board
@@ -11,9 +11,9 @@ class Tools
       for j in 0..7
         if (i + j) % 2 == 1 # If it's not an empty case.
           if i < 3
-            damier[i][j] = Pion.new(false, false)
+            damier[i][j] = Piece.new(false, false)
           elsif i > 4
-            damier[i][j] = Pion.new(true, false)
+            damier[i][j] = Piece.new(true, false)
           else
             damier[i][j] = nil
           end
