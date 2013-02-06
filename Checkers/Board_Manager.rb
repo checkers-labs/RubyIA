@@ -227,7 +227,8 @@ class Board_Manager
           if !@p_must_eat && recursivity_level <= 0 # A corriger ...
             move = [xOrig + x, yOrig + y]
             moves_chain << move
-            @p_moves_list << moves_chain
+            @p_moves_list << moves_chain.dup
+            moves_chain.pop
           end
         end
         
@@ -268,6 +269,7 @@ class Board_Manager
     @p_moves_list.each{
       |coup|
       print coup
+      print "\n"
     }
     
     return @p_moves_list
@@ -280,7 +282,7 @@ class Board_Manager
     for i in 1..@p_moves_list[id].length-1
       src = @p_moves_list[id][i-1]
       dest = @p_moves_list[id][i]
-      self.move(src.x, src.y, dest.x, dest.y)
+      self.move(src[0], src[1], dest[0], dest[1])
     end
     
     @calculation_board.white_is_playing = !@calculation_board.white_is_playing
