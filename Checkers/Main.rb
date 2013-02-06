@@ -10,14 +10,15 @@ test.move(2, 1, 3, 0)
 test.move(2, 3, 3, 2)
 test.move(2, 7, 3, 6)
 
-test.display(false)
+Tools.display(test.calculation_board.tab_piece)
 
 print test.number_of_moves()
 test.play_selected_move(2)
-test.display(false)
+Tools.display(test.calculation_board.tab_piece)
 
 test.number_of_moves()
 test.play_selected_move(0)
+<<<<<<< HEAD
 test.display(false)
 
 
@@ -54,3 +55,6 @@ print coup
 
 print "finit"
  
+
+Tools.display(test.calculation_board.tab_piece)
+

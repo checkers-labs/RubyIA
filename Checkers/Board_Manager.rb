@@ -17,39 +17,6 @@ class Board_Manager
   
   
   
-  # Display a board.
-  def display(is_real_board = true)
-    selected_board = @real_board
-    
-    if is_real_board == false
-      selected_board = @calculation_board
-    end
-    
-    print "\n"
-    selected_board.tab_piece.each{
-      |ligne|
-      ligne.each{
-        |piece|
-        if piece == nil
-          print 0
-        elsif piece == Piece.new(false, false)
-          print 1
-        elsif piece == Piece.new(true, false)
-          print 2
-        elsif piece == Piece.new(false, true)
-          print 3
-        elsif piece == Piece.new(true, true)
-          print 4
-        end   
-        
-        print " "
-      }
-      print "\n"
-    }
-  end
-  
-  
-  
   # Moves a piece on the real board.
   def move_real(xOrig, yOrig, xDest, yDest)
     
@@ -164,13 +131,64 @@ class Board_Manager
     return true
     
   end
-
-
   
-  # Return the number of moves.
-  def number_of_moves()
-    return search_player_moves().length
-  end
+  
+  
+  # Give the AI the needed information.
+  def interaction_IA(chosen_move = -1)
+    
+    final_tab = Array.new
+    print "\n"
+   
+    if chosen_move == -1 # -1 means AI want to reinitialize the calculation board.
+      @calculation_board.copy(@real_board)
+      final_tab[0] = false
+      final_tab[1] = search_player_moves()
+    else
+      black_piece = 0
+      black_king = 0
+      white_piece = 0
+      white_king = 0
+      @calculation_board.tab_piece.each{ # Collecting calculation board's infos.
+        |line|
+        line.each{
+          |piece|
+          if piece != nil
+            if piece.p_is_white == true
+              white_piece += 1
+              if piece.p_is_king == true
+                white_king += 1
+              end
+            else
+              black_piece += 1
+              if piece.p_is_king == true
+                black_king += 1
+              end
+            end
+          end
+        }
+      }
+      
+      if black_piece == 0 # Case White wins.
+        final_tab[0] = true         # is_ended
+        final_tab[1] = true         # white_wins
+        final_tab[2] = white_piece  # total_number_of_pieces_left (including the kings)
+        final_tab[3] = white_king   # number_of_kings_left
+      elsif white_piece == 0 # Case Black wins.
+        final_tab[0] = true
+        final_tab[1] = false
+        final_tab[2] = black_piece
+        final_tab[3] = black_king
+      else                  # Case the game continue.
+        final_tab[0] = false
+        final_tab[1] = number_of_moves()
+        final_tab[2] = white_piece
+        final_tab[3] = black_piece
+      end
+      
+    end
+    return final_tab
+  end  
 
   
   
@@ -274,6 +292,13 @@ class Board_Manager
     
     return @p_moves_list
   end  
+  
+  
+  
+  # Return the number of moves.
+  def number_of_moves()
+    return search_player_moves().length
+  end
 
 
   

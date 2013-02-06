@@ -24,10 +24,35 @@ class Tools
     end
     
     return damier
-  
-  # End initializing the board.
     
-    
-    #return [[nil, Pion.new(false, false), nil, Pion.new(false, false), nil, Pion.new(false, false), nil, Pion.new(false, false)],[Pion.new(false, false), nil, Pion.new(false, false), nil, Pion.new(false, false), nil, Pion.new(false, false), nil],[nil, Pion.new(false, false), nil, Pion.new(false, false), nil, Pion.new(false, false), nil, Pion.new(false, false)],[nil, nil, nil, nil, nil,nil, nil, nil],[nil, nil, nil, nil, nil,nil, nil, nil],[Pion.new(true, false), nil, Pion.new(true, false), nil, Pion.new(true, false), nil, Pion.new(true, false), nil],[nil, Pion.new(true, false), nil, Pion.new(true, false), nil, Pion.new(true, false), nil, Pion.new(true, false)],[Pion.new(true, false), nil, Pion.new(true, false), nil, Pion.new(true, false), nil, Pion.new(true, false), nil]]
   end
+  
+  
+  
+  # Display a board.
+  def Tools.display(tab)
+    print "\n"
+    
+    tab.each{
+      |ligne|
+      ligne.each{
+        |piece|
+        if piece == nil
+          print 0
+        elsif piece == Piece.new(false, false)
+          print 1
+        elsif piece == Piece.new(true, false)
+          print 2
+        elsif piece == Piece.new(false, true)
+          print 3
+        elsif piece == Piece.new(true, true)
+          print 4
+        end   
+        
+        print " "
+      }
+      print "\n"
+    }
+  end
+  
 end
