@@ -50,8 +50,8 @@ class Board_Manager
   
   
   
-  # Moves a piece.
-  def move(xOrig, yOrig, xDest, yDest)
+  # Moves a piece on the real board.
+  def move_real(xOrig, yOrig, xDest, yDest)
     
     if is_possible_move(xOrig, yOrig, xDest, yDest) == true
       xDist = (xDest - xOrig).abs
@@ -63,18 +63,39 @@ class Board_Manager
       
       @real_board.tab_piece[xDest][yDest] = @real_board.tab_piece[xOrig][yOrig]
       @real_board.tab_piece[xOrig][yOrig] = nil
-      
-      if xDest == 0 || xDest == 7 # Crown a piece.
-        @real_board.tab_piece[xDest][yDest].p_is_king = true
-      end
-      
-=begin     
+         
       if @real_board.tab_piece[xDest][yDest].p_is_king == false # We may simplify this condition.
         if (xDest == 0 && @real_board.tab_piece[xDest][yDest].p_is_white) || (xDest == 7 && !@real_board.tab_piece[xDest][yDest].p_is_white) # Crown a piece.
           @real_board.tab_piece[xDest][yDest].p_is_king = true
         end
       end
-=end
+
+      @calculation_board.copy(@real_board)
+    end
+    
+  end
+  
+  
+  
+  # Moves a piece.
+  def move(xOrig, yOrig, xDest, yDest)
+    
+    if is_possible_move(xOrig, yOrig, xDest, yDest) == true
+      xDist = (xDest - xOrig).abs
+      yDist = (yDest - yOrig).abs
+      
+      if xDist == 2 && yDist == 2 # If the move imply to eat a piece.  
+        @calculation_board.tab_piece[(xOrig + xDest) / 2][(yOrig + yDest) / 2] = nil
+      end 
+      
+      @calculation_board.tab_piece[xDest][yDest] = @calculation_board.tab_piece[xOrig][yOrig]
+      @calculation_board.tab_piece[xOrig][yOrig] = nil
+          
+      if @calculation_board.tab_piece[xDest][yDest].p_is_king == false # We may simplify this condition.
+        if (xDest == 0 && @calculation_board.tab_piece[xDest][yDest].p_is_white) || (xDest == 7 && !@calculation_board.tab_piece[xDest][yDest].p_is_white) # Crown a piece.
+          @calculation_board.tab_piece[xDest][yDest].p_is_king = true
+        end
+      end
     end
   end
   
@@ -147,21 +168,23 @@ class Board_Manager
 
   
   # Return the number of moves.
-  def number_of_moves(is_white_player)
-    @calculation_board.copy(@real_board)
-    return search_player_moves(is_white_player).length
+  def number_of_moves()
+    return search_player_moves().length
   end
 
   
   
   # List all the possible moves for a piece.
-  def search_piece_moves(xOrig, yOrig, recursivity_level)
+  def search_piece_moves(xOrig, yOrig, recursivity_level, moves_chain_param)
     
     if @calculation_board.tab_piece[xOrig][yOrig] == nil
       return nil
     end
       
     move = nil
+    
+    moves_chain = moves_chain_param.dup
+    moves_chain << [xOrig, yOrig]
     
     for x in [-2, -1, 1, 2] # Only those cases can be reached.
       for y in [-2, -1, 1, 2]
@@ -192,7 +215,7 @@ class Board_Manager
             self.recursive_move(xOrig, yOrig, xOrig + x, yOrig + y)
             
             # Recursivity
-            self.search_piece_moves(xOrig + x, yOrig + y, 2)
+            self.search_piece_moves(xOrig + x, yOrig + y, 2, moves_chain)
             recursivity_level -= 1
             
             # We rollback the move (can't use the "move" method cause standard pieces can't move backward).
@@ -201,9 +224,10 @@ class Board_Manager
             @calculation_board.tab_piece[xOrig + x][yOrig + y] = nil
           end
           
-          if !@p_must_eat && recursivity_level <= 0
+          if !@p_must_eat && recursivity_level <= 0 # A corriger ...
             move = [xOrig + x, yOrig + y]
-            @p_moves_list << move
+            moves_chain << move
+            @p_moves_list << moves_chain
           end
         end
         
@@ -215,14 +239,15 @@ class Board_Manager
     
     if recursivity_level >= 2 && move == nil # Record the move at the end of the capturing chain.
       move = [xOrig, yOrig]
-      @p_moves_list << move
+      #moves_chain << move
+      @p_moves_list << moves_chain
     end
   end
 
 
   
   # List all the possible moves for a player.
-  def search_player_moves(is_white_player)
+  def search_player_moves()
  
     @p_must_eat = false
     @p_moves_list = Array.new
@@ -233,8 +258,8 @@ class Board_Manager
           next
         end
         
-        if @calculation_board.tab_piece[i][j].p_is_white == is_white_player
-          self.search_piece_moves(i, j, 0)
+        if @calculation_board.tab_piece[i][j].p_is_white == @calculation_board.white_is_playing
+          self.search_piece_moves(i, j, 0, Array.new)
         end
       end
     end
@@ -247,5 +272,19 @@ class Board_Manager
     
     return @p_moves_list
   end  
+
+
+  
+  # Play the selected move from the previous moves list.
+  def play_selected_move(id)
+    for i in 1..@p_moves_list[id].length-1
+      src = @p_moves_list[id][i-1]
+      dest = @p_moves_list[id][i]
+      self.move(src.x, src.y, dest.x, dest.y)
+    end
+    
+    @calculation_board.white_is_playing = !@calculation_board.white_is_playing
+    @p_moves_list.clear 
+  end
   
 end
